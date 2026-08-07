@@ -18,7 +18,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthPath = PUBLIC_AUTH_PATHS.some((path) => pathname.startsWith(path));
-  const isProtectedPath = pathname.startsWith("/dashboard") || pathname.startsWith("/settings");
+  const isProtectedPath =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/settings");
 
   // Signed-out users hitting a protected route are bounced to /login,
   // with a redirect param so we can send them back after signing in.
