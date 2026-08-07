@@ -1,21 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
-export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
+export function AuthForm({ mode, initialError }: { mode: 'login' | 'register'; initialError?: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string>(initialError ?? '');
   const [message, setMessage] = useState<string>();
   const [loading, setLoading] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    setError(undefined);
-    setMessage(undefined);
+    setError('');
+    setMessage('');
     const supabase = createClient();
     const result = mode === 'login'
       ? await supabase.auth.signInWithPassword({ email, password })
@@ -29,7 +30,9 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         });
 
     if (result.error) {
-      setError(result.error.message);
+      setError(result.error.message.includes('Invalid login credentials')
+        ? 'The email or password is incorrect.'
+        : result.error.message);
       setLoading(false);
       return;
     }
@@ -62,6 +65,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         {mode === 'login' ? 'New to K-Tech? ' : 'Already have an account? '}
         <a href={mode === 'login' ? '/register' : '/login'} className="font-semibold text-blue-600 hover:underline">{mode === 'login' ? 'Create an account' : 'Sign in'}</a>
       </p>
+      {mode === 'login' && <Link href="/forgot-password" className="block text-center text-sm font-semibold text-blue-600 hover:underline">Forgot your password?</Link>}
     </form>
   );
 }

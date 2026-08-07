@@ -111,3 +111,6 @@ CREATE POLICY answers_admin_select_profile_role ON public.form_answers
 
 CREATE POLICY files_admin_select_profile_role ON public.submission_files
   FOR SELECT USING (public.is_admin());
+
+CREATE POLICY files_admin_insert_profile_role ON public.submission_files
+  FOR INSERT WITH CHECK (public.is_admin());

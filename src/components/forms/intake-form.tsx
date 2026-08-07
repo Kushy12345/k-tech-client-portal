@@ -16,11 +16,12 @@ function optionsFor(question: FormQuestion): string[] {
     : [];
 }
 
-function Field({ question, register, value, onMultiChange }: {
+function Field({ question, register, value, onMultiChange, onFileChange }: {
   question: FormQuestion;
   register: UseFormRegister<Answers>;
   value: string | string[] | undefined;
   onMultiChange: (value: string, checked: boolean) => void;
+  onFileChange: (file: File | undefined) => void;
 }) {
   const errorMessage = question.required ? 'This field is required.' : undefined;
   const common = { ...register(question.key ?? question.id, { required: question.required ? errorMessage : false }) };
@@ -31,16 +32,17 @@ function Field({ question, register, value, onMultiChange }: {
     const selected = Array.isArray(value) ? value : [];
     return <div className="grid gap-3 sm:grid-cols-2">{optionsFor(question).map((option) => <label key={option} className="choice"><input type="checkbox" checked={selected.includes(option)} onChange={(event) => onMultiChange(option, event.target.checked)} />{option}</label>)}</div>;
   }
-  if (question.question_type === 'file') return <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" className="field file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-blue-700" onChange={(event) => { const file = event.target.files?.[0]; if (file && (!allowedFiles.includes(file.type) || file.size > 10 * 1024 * 1024)) event.target.setCustomValidity('Use a JPG, PNG, WEBP, PDF, DOC, or DOCX file under 10 MB.'); else event.target.setCustomValidity(''); }} />;
+  if (question.question_type === 'file') return <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" aria-label={question.label} className="field file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-blue-700" onChange={(event) => { const file = event.target.files?.[0]; const valid = !file || (allowedFiles.includes(file.type) && file.size <= 10 * 1024 * 1024); event.target.setCustomValidity(valid ? '' : 'Use a JPG, PNG, WEBP, PDF, DOC, or DOCX file under 10 MB.'); onFileChange(valid ? file : undefined); }} />;
   const type = question.question_type === 'url' ? 'url' : question.question_type === 'number' ? 'number' : question.question_type === 'email' ? 'email' : question.question_type === 'date' ? 'date' : 'text';
   return <input {...common} type={type} placeholder={question.placeholder ?? ''} className="field" />;
 }
 
-export function IntakeForm({ template, sections, questions }: { template: FormTemplate; sections: FormSection[]; questions: FormQuestion[] }) {
+export function IntakeForm({ template, sections, questions, initialSubmissionId, initialAnswers = {} }: { template: FormTemplate; sections: FormSection[]; questions: FormQuestion[]; initialSubmissionId?: string; initialAnswers?: Answers }) {
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
-  const [submissionId, setSubmissionId] = useState<string>();
-  const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm<Answers>({ mode: 'onBlur' });
+  const [submissionId, setSubmissionId] = useState<string | undefined>(initialSubmissionId);
+  const [files, setFiles] = useState<Record<string, File>>({});
+  const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm<Answers>({ mode: 'onBlur', defaultValues: initialAnswers });
   const currentSection = sections[step];
   const currentQuestions = useMemo(() => questions.filter((question) => question.section_id === currentSection?.id), [currentSection?.id, questions]);
   const values = watch();
@@ -74,6 +76,16 @@ export function IntakeForm({ template, sections, questions }: { template: FormTe
     await supabase.from('form_answers').delete().eq('submission_id', submission.id);
     const { error: answerError } = await supabase.from('form_answers').insert(answerRows);
     if (answerError) { setStatus('error'); return; }
+    for (const [key, file] of Object.entries(files)) {
+      const question = questions.find((candidate) => candidate.key === key);
+      if (!question) continue;
+      const extension = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+      const path = `${userData.user.id}/${submission.id}/${question.id}-${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await supabase.storage.from('submission-assets').upload(path, file, { contentType: file.type, upsert: false });
+      if (uploadError) { setStatus('error'); return; }
+      const { error: fileError } = await supabase.from('submission_files').insert({ submission_id: submission.id, question_id: question.id, storage_path: path, filename: file.name, mime_type: file.type, size_bytes: file.size });
+      if (fileError) { setStatus('error'); return; }
+    }
     setStatus(draft ? 'idle' : 'success');
   };
 
@@ -86,7 +98,7 @@ export function IntakeForm({ template, sections, questions }: { template: FormTe
       <div className="mb-8"><div className="mb-3 flex items-center justify-between text-sm font-medium"><span>Step {step + 1} of {sections.length}</span><span>{Math.round(((step + 1) / sections.length) * 100)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${((step + 1) / sections.length) * 100}%` }} /></div></div>
       <form onSubmit={handleSubmit((answers) => save(answers, false), onInvalid)} className="card">
         <div className="mb-8 border-b pb-6"><p className="text-sm font-semibold text-blue-600">Section {step + 1}</p><h2 className="mt-1 text-2xl font-bold">{currentSection?.title}</h2><p className="mt-2 text-slate-600">{currentSection?.description}</p></div>
-        <div className="space-y-7">{currentQuestions.map((question) => <div key={question.id}><label htmlFor={question.key ?? question.id} className="mb-2 block font-semibold">{question.label}{question.required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}</label><Field question={question} register={register} value={values[question.key ?? question.id]} onMultiChange={(option, checked) => { const key = question.key ?? question.id; const current = Array.isArray(values[key]) ? values[key] : []; setValue(key, checked ? [...current, option] : current.filter((item) => item !== option), { shouldValidate: true }); }} />{errors[question.key ?? question.id] && <p role="alert" className="mt-2 text-sm text-red-600">Please complete this field.</p>}</div>)}</div>
+        <div className="space-y-7">{currentQuestions.map((question) => <div key={question.id}><label htmlFor={question.key ?? question.id} className="mb-2 block font-semibold">{question.label}{question.required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}</label>{question.help_text && <p className="mb-2 text-sm text-slate-500">{question.help_text}</p>}<Field question={question} register={register} value={values[question.key ?? question.id]} onFileChange={(file) => { const key = question.key ?? question.id; setFiles((current) => { const next = { ...current }; if (file) next[key] = file; else delete next[key]; return next; }); }} onMultiChange={(option, checked) => { const key = question.key ?? question.id; const current = Array.isArray(values[key]) ? values[key] : []; setValue(key, checked ? [...current, option] : current.filter((item) => item !== option), { shouldValidate: true }); }} />{errors[question.key ?? question.id] && <p role="alert" className="mt-2 text-sm text-red-600">Please complete this field.</p>}</div>)}</div>
         {status === 'error' && <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">Please check the highlighted fields and try again.</p>}
         <div className="mt-10 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><button type="button" className="button secondary" disabled={step === 0 || status === 'saving'} onClick={() => setStep((current) => current - 1)}>Previous</button><div className="flex flex-col gap-3 sm:flex-row"><button type="button" className="button secondary" disabled={status === 'saving'} onClick={handleSubmit((answers) => save(answers, true), onInvalid)}>{status === 'saving' ? 'Saving...' : 'Save draft'}</button>{step < sections.length - 1 ? <button type="button" className="button primary" onClick={async () => { const valid = await trigger(currentQuestions.map((question) => question.key ?? question.id)); if (valid) setStep((current) => current + 1); }}>Next section</button> : <button type="submit" className="button primary" disabled={status === 'saving'}>Review and submit</button>}</div></div>
       </form>

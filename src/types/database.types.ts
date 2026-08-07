@@ -17,6 +17,7 @@ type SubmissionRow = { id: string; template_id: string | null; user_id: string |
 type AnswerRow = { id: string; submission_id: string; question_id: string | null; answer_text: string | null; answer_json: Json | null; created_at: string };
 type ProfileRow = { id: string; email: string; full_name: string | null; role: 'client' | 'admin'; created_at: string; updated_at: string };
 type NoteRow = { id: string; submission_id: string; author_id: string; content: string; created_at: string };
+type FileRow = { id: string; submission_id: string; question_id: string | null; storage_path: string; filename: string; mime_type: string | null; size_bytes: number | null; uploaded_at: string };
 
 export interface Database {
   public: {
@@ -28,6 +29,7 @@ export interface Database {
       form_answers: Table<AnswerRow, Partial<AnswerRow> & Pick<AnswerRow, 'submission_id'>, Partial<AnswerRow>>;
       profiles: Table<ProfileRow, Partial<ProfileRow> & Pick<ProfileRow, 'id'>, Partial<ProfileRow>>;
       project_notes: Table<NoteRow, Partial<NoteRow> & Pick<NoteRow, 'submission_id' | 'author_id' | 'content'>, Partial<NoteRow>>;
+      submission_files: Table<FileRow, Partial<FileRow> & Pick<FileRow, 'submission_id' | 'storage_path' | 'filename'>, Partial<FileRow>>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
