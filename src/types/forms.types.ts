@@ -71,6 +71,15 @@ export interface QuestionOption {
 
 export type SubmissionStatus = 'draft' | 'submitted' | 'under_review' | 'contacted' | 'converted' | 'archived';
 
+export type AppRole = 'client' | 'admin';
+export type ProjectStatus =
+  | 'New Inquiry'
+  | 'Reviewing Requirements'
+  | 'Proposal Sent'
+  | 'Approved'
+  | 'In Progress'
+  | 'Completed';
+
 export interface FormSubmission {
   id: UUID;
   template_id: UUID;
@@ -85,6 +94,8 @@ export interface FormSubmission {
   created_at: string;
   updated_at: string;
   submitted_at?: string | null;
+  project_status?: ProjectStatus;
+  last_status_changed_at?: string;
 }
 
 export interface FormAnswer {
