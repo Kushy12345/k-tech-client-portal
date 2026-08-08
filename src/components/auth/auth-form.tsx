@@ -97,7 +97,7 @@ export function AuthForm({ mode, initialError, redirectPath }: AuthFormProps) {
   return (
     <form onSubmit={submit} className="card w-full max-w-md space-y-5">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">K-Tech Solutions</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Solutions</p>
         <h1 className="mt-3 text-3xl font-bold">{mode === 'login' ? 'Welcome back' : 'Create your client account'}</h1>
         <p className="mt-2 text-sm text-slate-600">
           {mode === 'login' ? 'Continue managing your project discovery and requests.' : 'Save your progress and keep project conversations in one place.'}
@@ -111,9 +111,9 @@ export function AuthForm({ mode, initialError, redirectPath }: AuthFormProps) {
       <button className="button primary w-full" disabled={loading}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}</button>
       <p className="text-center text-sm text-slate-600">
         {mode === 'login' ? 'New to K-Tech? ' : 'Already have an account? '}
-        <a href={mode === 'login' ? '/register' : '/login'} className="font-semibold text-blue-600 hover:underline">{mode === 'login' ? 'Create an account' : 'Sign in'}</a>
+        <a href={mode === 'login' ? '/register' : '/login'} className="font-semibold text-[#7C3AED] hover:text-[#5B21B6] hover:underline">{mode === 'login' ? 'Create an account' : 'Sign in'}</a>
       </p>
-      {mode === 'login' && <Link href="/forgot-password" className="block text-center text-sm font-semibold text-blue-600 hover:underline">Forgot your password?</Link>}
+      {mode === 'login' && <Link href="/forgot-password" className="block text-center text-sm font-semibold text-[#7C3AED] hover:text-[#5B21B6] hover:underline">Forgot your password?</Link>}
     </form>
   );
 }

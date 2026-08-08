@@ -3,16 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --background: 220 33% 98%;
-  --foreground: 222 47% 11%;
+  --background: 60 20% 98%;
+  --foreground: 0 0% 7%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 221 83% 53%;
-  --primary: 221 83% 53%;
-  --primary-foreground: 0 0% 100%;
-  --muted: 210 40% 96%;
+  --card-foreground: 0 0% 7%;
+  --border: 40 15% 88%;
+  --input: 40 15% 88%;
+  --ring: 262 83% 58%;
+  --primary: 46 65% 52%;
+  --primary-foreground: 0 0% 7%;
+  --accent: 262 83% 58%;
+  --accent-foreground: 0 0% 100%;
+  --soft-gold: 52 78% 91%;
+  --soft-purple: 270 100% 95%;
+  --muted: 60 10% 96%;
   --muted-foreground: 215 16% 47%;
   --radius: 0.75rem;
 }
@@ -26,9 +30,10 @@ body {
 
 @layer components {
   .card { @apply rounded-2xl border bg-white p-6 shadow-sm sm:p-10; }
-  .field { @apply w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100; }
-  .choice { @apply flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50; }
+  .field { @apply w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100; }
+  .choice { @apply flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition hover:border-purple-500 has-[:checked]:border-yellow-600 has-[:checked]:bg-yellow-50; }
   .button { @apply rounded-xl px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
-  .button.primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
+  .button.primary { @apply bg-yellow-600 text-slate-950 hover:bg-yellow-700; }
   .button.secondary { @apply border bg-white text-slate-700 hover:bg-slate-50; }
+  .button.accent { @apply bg-purple-600 text-white hover:bg-purple-700; }
 }
