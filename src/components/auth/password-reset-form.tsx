@@ -19,7 +19,7 @@ export function PasswordResetForm({ recovery = false }: { recovery?: boolean }) 
     const result = recovery
       ? await supabase.auth.updateUser({ password })
       : await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
         });
     if (result.error) setError(result.error.message);
     else {
