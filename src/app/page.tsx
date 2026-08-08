@@ -17,7 +17,7 @@ export default function HomePage() {
         <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
           Share your goals, audience, content, and ideas with our team through a guided discovery experience.
         </p>
-        <Link href="/intake/general-digital-discovery" className="mt-10 w-fit rounded-xl bg-blue-500 px-6 py-3 font-semibold transition hover:bg-blue-400">
+        <Link href="/register" className="mt-10 w-fit rounded-xl bg-blue-500 px-6 py-3 font-semibold transition hover:bg-blue-400">
           Start your discovery
         </Link>
       </section>
