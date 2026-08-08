@@ -4,7 +4,13 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-20 lg:px-12">
-        <p className="mb-5 text-sm font-semibold uppercase tracking-[0.25em] text-blue-300">K-Tech Solutions</p>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-300">K-Tech Solutions</p>
+          <nav aria-label="Account navigation" className="flex items-center gap-4 text-sm font-semibold">
+            <Link href="/login" className="text-slate-200 transition hover:text-white">Login</Link>
+            <Link href="/register" className="rounded-lg border border-slate-600 px-4 py-2 text-white transition hover:border-slate-400">Create account</Link>
+          </nav>
+        </div>
         <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-6xl">
           Build a website that moves your business forward.
         </h1>

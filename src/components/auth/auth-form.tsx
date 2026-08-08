@@ -4,7 +4,26 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
-export function AuthForm({ mode, initialError }: { mode: 'login' | 'register'; initialError?: string }) {
+interface AuthFormProps {
+  mode: 'login' | 'register';
+  initialError?: string;
+  redirectPath?: string;
+}
+
+function getSafeRedirectPath(path: string | undefined) {
+  if (!path || !path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return undefined;
+
+  try {
+    const url = new URL(path, window.location.origin);
+    return url.origin === window.location.origin
+      ? `${url.pathname}${url.search}`
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function AuthForm({ mode, initialError, redirectPath }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -43,7 +62,36 @@ export function AuthForm({ mode, initialError }: { mode: 'login' | 'register'; i
       return;
     }
 
-    window.location.assign('/dashboard');
+    if (mode === 'register') {
+      window.location.assign('/dashboard');
+      return;
+    }
+
+    const safeRedirectPath = getSafeRedirectPath(redirectPath);
+    if (safeRedirectPath) {
+      window.location.assign(safeRedirectPath);
+      return;
+    }
+
+    if (!result.data.user) {
+      setError('We could not complete your sign-in. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', result.data.user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      setError('We could not verify your account permissions. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    window.location.assign(profile?.role === 'admin' ? '/admin' : '/dashboard');
   }
 
   return (
