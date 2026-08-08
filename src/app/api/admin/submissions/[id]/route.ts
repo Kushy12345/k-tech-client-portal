@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { PROJECT_STATUSES } from '@/components/admin/project-status-form';
+import { PROJECT_STATUSES } from '@/lib/constants';
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   const supabase = await createClient();

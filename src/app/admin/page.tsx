@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { requireRole } from '@/lib/supabase/authorization';
-import { PROJECT_STATUSES } from '@/components/admin/project-status-form';
+import { PROJECT_STATUSES } from '@/lib/constants';
 
 export default async function AdminPage({ searchParams }: { searchParams: { q?: string; status?: string } }) {
   const { supabase } = await requireRole('admin');

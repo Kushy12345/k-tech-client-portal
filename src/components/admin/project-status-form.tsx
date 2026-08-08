@@ -2,15 +2,7 @@
 
 import { useState } from 'react';
 import type { ProjectStatus } from '@/types/forms.types';
-
-export const PROJECT_STATUSES: ProjectStatus[] = [
-  'New Inquiry',
-  'Reviewing Requirements',
-  'Proposal Sent',
-  'Approved',
-  'In Progress',
-  'Completed',
-];
+import { PROJECT_STATUSES } from '@/lib/constants';
 
 export function ProjectStatusForm({ id, initialStatus }: { id: string; initialStatus: ProjectStatus }) {
   const [status, setStatus] = useState<ProjectStatus>(initialStatus);
