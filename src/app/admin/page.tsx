@@ -54,7 +54,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { q?: 
             {submissions.map((submission) => (
               <Link key={submission.id} href={`/admin/submissions/${submission.id}`} className="block p-5 transition hover:bg-slate-50 sm:p-6">
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                  <div><p className="font-semibold">{submission.business_name || 'Untitled project'}</p><p className="mt-1 text-sm text-slate-500">{submission.contact_name || 'No contact'} · {submission.contact_email || 'No email'}</p></div>
+                  <div><p className="font-semibold">{submission.business_name || 'Website & Digital Solution Discovery'}</p><p className="mt-1 text-sm text-slate-500">{submission.contact_name || 'No contact'} · {submission.contact_email || 'No email'}</p></div>
                   <div className="flex items-center gap-3"><span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">{submission.project_status}</span><span className="text-xs text-slate-500">{new Date(submission.submitted_at ?? submission.created_at).toLocaleDateString()}</span></div>
                 </div>
               </Link>
