@@ -76,13 +76,16 @@ export default async function DashboardPage() {
               {submissions.map((submission) => {
                 const status = submission.project_status ?? statusLabels[submission.status] ?? submission.status;
                 return (
-                  <Link key={submission.id} href={`/dashboard/submissions/${submission.id}`} className="group card block p-5 transition hover:-translate-y-0.5 hover:border-[#D4AF37] sm:p-6">
+                  <Link key={submission.id} href={submission.is_draft ? '/intake/general-digital-discovery' : `/dashboard/submissions/${submission.id}`} className="group card block p-5 transition hover:-translate-y-0.5 hover:border-[#D4AF37] sm:p-6">
                     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                       <div>
                         <p className="font-semibold group-hover:text-[#5B21B6]">{projectTitle(submission)}</p>
                         <p className="mt-1 text-sm text-slate-500">{submission.is_draft ? 'Last saved' : submission.submitted_at ? 'Submitted' : 'Started'} {new Date(submission.submitted_at ?? submission.created_at).toLocaleDateString()}</p>
                       </div>
-                      <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${submission.is_draft ? 'border-amber-400/30 bg-amber-400/10 text-amber-300' : statusStyles[status] ?? 'border-slate-700 bg-slate-800 text-slate-300'}`}>{submission.is_draft ? 'Draft' : status}</span>
+                      <div className="flex items-center gap-3">
+                        <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${submission.is_draft ? 'border-amber-400/30 bg-amber-400/10 text-amber-300' : statusStyles[status] ?? 'border-slate-700 bg-slate-800 text-slate-300'}`}>{submission.is_draft ? 'Draft' : status}</span>
+                        {submission.is_draft && <span className="text-sm font-semibold text-[#D4AF37]">Continue →</span>}
+                      </div>
                     </div>
                   </Link>
                 );
@@ -102,15 +105,17 @@ export default async function DashboardPage() {
           <div className="card p-6 sm:p-7">
             <p className="text-sm font-semibold text-[#D4AF37]">Need to update something?</p>
             <h2 className="mt-2 text-xl font-bold">Keep your details current</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Update your profile so K-Tech Technologies can reach you with project questions and updates.</p>
+            <p className="mt-2 text-slate-400">Update your profile so K-Tech Technologies can reach you with project questions and updates.</p>
             <Link href="/dashboard/profile" className="button secondary mt-5 inline-flex">View profile</Link>
           </div>
           {latest ? (
-            <div className="rounded-2xl border border-purple-100 bg-purple-50 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-purple-700">Latest request</p>
-              <p className="mt-2 font-semibold text-slate-900">{projectTitle(latest)}</p>
-              <p className="mt-1 text-sm text-slate-600">{latest.project_status ?? statusLabels[latest.status] ?? latest.status}</p>
-              <Link href={`/dashboard/submissions/${latest.id}`} className="mt-4 inline-block text-sm font-semibold text-purple-700 hover:underline">View request →</Link>
+            <div className="rounded-2xl border border-purple-500/20 bg-purple-500/10 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-purple-300">{latest.is_draft ? 'Continue your request' : 'Latest request'}</p>
+              <p className="mt-2 font-semibold text-white">{projectTitle(latest)}</p>
+              <p className="mt-1 text-sm text-slate-400">{latest.is_draft ? 'You have a saved request waiting for you.' : latest.project_status ?? statusLabels[latest.status] ?? latest.status}</p>
+              <Link href={latest.is_draft ? '/intake/general-digital-discovery' : `/dashboard/submissions/${latest.id}`} className="mt-4 inline-flex text-sm font-semibold text-[#D4AF37] hover:underline">
+                {latest.is_draft ? 'Continue / edit request →' : 'View request →'}
+              </Link>
             </div>
           ) : null}
         </aside>
