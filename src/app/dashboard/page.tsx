@@ -2,19 +2,120 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { SignOutButton } from '@/components/dashboard/sign-out-button';
 
-const statusLabels: Record<string, string> = { draft: 'Draft', submitted: 'Submitted', under_review: 'Under review', contacted: 'Contacted', converted: 'Converted', archived: 'Archived' };
+const statusLabels: Record<string, string> = {
+  draft: 'Draft',
+  submitted: 'Submitted',
+  under_review: 'Under review',
+  contacted: 'Contacted',
+  converted: 'Converted',
+  archived: 'Archived',
+};
+
+const statusStyles: Record<string, string> = {
+  'New Inquiry': 'bg-amber-50 text-amber-800 border-amber-200',
+  'Reviewing Requirements': 'bg-purple-50 text-purple-800 border-purple-200',
+  'Proposal Sent': 'bg-blue-50 text-blue-800 border-blue-200',
+  'Approved': 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  'In Progress': 'bg-sky-50 text-sky-800 border-sky-200',
+  'Completed': 'bg-slate-100 text-slate-700 border-slate-200',
+};
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: submissions } = await supabase.from('form_submissions').select('id, business_name, status, project_status, created_at, submitted_at, template_id').eq('user_id', user.id).order('created_at', { ascending: false });
-  const name = typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : user.email?.split('@')[0] ?? 'there';
 
-  return <main className="mx-auto max-w-6xl px-6 py-10">
-    <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-[#D4AF37]">Client workspace</p><h1 className="mt-2 text-3xl font-bold">Welcome, {name}</h1><p className="mt-2 text-slate-600">Track your discovery requests and keep your project information close.</p></div><div className="flex items-center gap-4"><Link href="/intake/general-digital-discovery" className="button primary">Start a request</Link><SignOutButton /></div></div>
-    <section className="mt-10"><div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold">Your project requests</h2><span className="text-sm text-slate-500">{submissions?.length ?? 0} total</span></div>
-      {submissions?.length ? <div className="grid gap-4">{submissions.map((submission) => <Link key={submission.id} href={`/dashboard/submissions/${submission.id}`} className="card block transition hover:-translate-y-0.5 hover:border-[#D4AF37]"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="font-semibold">{submission.business_name || 'Untitled project request'}</p><p className="mt-1 text-sm text-slate-500">Started {new Date(submission.created_at).toLocaleDateString()}</p></div><span className="w-fit rounded-full bg-[#FBF5D5] px-3 py-1 text-xs font-semibold text-[#5B21B6]">{submission.project_status ?? statusLabels[submission.status] ?? submission.status}</span></div></Link>)}</div> : <div className="card text-center"><h3 className="text-lg font-bold">No project requests yet</h3><p className="mt-2 text-sm text-slate-600">Start with a discovery form and we’ll help shape the next step.</p><Link href="/intake/general-digital-discovery" className="button primary mt-5 inline-block">Start discovery</Link></div>}
-    </section>
-  </main>;
+  const { data: submissions } = await supabase
+    .from('form_submissions')
+    .select('id, business_name, status, project_status, created_at, submitted_at, template_id')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  const name = typeof user.user_metadata?.full_name === 'string'
+    ? user.user_metadata.full_name
+    : user.email?.split('@')[0] ?? 'there';
+
+  const total = submissions?.length ?? 0;
+  const active = submissions?.filter((item) => !['Completed'].includes(item.project_status ?? '')).length ?? 0;
+  const completed = submissions?.filter((item) => item.project_status === 'Completed').length ?? 0;
+  const latest = submissions?.[0];
+
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
+      <section className="overflow-hidden rounded-3xl bg-slate-950 px-6 py-8 text-white shadow-sm sm:px-8">
+        <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">Client workspace</p>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Welcome back, {name}</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+              Keep your project requests, requirements, and progress in one place.
+            </p>
+          </div>
+          <Link href="/intake/general-digital-discovery" className="button inline-flex w-fit bg-[#D4AF37] text-slate-950 hover:bg-[#B8941F]">
+            Start a new request
+          </Link>
+        </div>
+      </section>
+
+      <section className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Total requests</p><p className="mt-2 text-3xl font-bold">{total}</p><p className="mt-1 text-xs text-slate-500">Everything you've started</p></div>
+        <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Active</p><p className="mt-2 text-3xl font-bold">{active}</p><p className="mt-1 text-xs text-slate-500">Requests still moving forward</p></div>
+        <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Completed</p><p className="mt-2 text-3xl font-bold">{completed}</p><p className="mt-1 text-xs text-slate-500">Projects marked complete</p></div>
+      </section>
+
+      <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div>
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div><p className="text-sm font-semibold text-[#7C3AED]">Your work</p><h2 className="mt-1 text-2xl font-bold">Project requests</h2></div>
+            <span className="text-sm text-slate-500">{total} total</span>
+          </div>
+
+          {submissions?.length ? (
+            <div className="grid gap-3">
+              {submissions.map((submission) => {
+                const status = submission.project_status ?? statusLabels[submission.status] ?? submission.status;
+                return (
+                  <Link key={submission.id} href={`/dashboard/submissions/${submission.id}`} className="group card block p-5 transition hover:-translate-y-0.5 hover:border-[#D4AF37] sm:p-6">
+                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                      <div>
+                        <p className="font-semibold group-hover:text-[#5B21B6]">{submission.business_name || 'Untitled project request'}</p>
+                        <p className="mt-1 text-sm text-slate-500">{submission.submitted_at ? 'Submitted' : 'Started'} {new Date(submission.submitted_at ?? submission.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${statusStyles[status] ?? 'bg-slate-100 text-slate-700 border-slate-200'}`}>{status}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="card p-8 text-center sm:p-10">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FBF5D5] text-xl">+</div>
+              <h3 className="mt-4 text-xl font-bold">Your next project starts here</h3>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Tell us what you want to build. The guided discovery form helps us understand your goals before we talk through the next step.</p>
+              <Link href="/intake/general-digital-discovery" className="button primary mt-6 inline-flex">Start discovery</Link>
+            </div>
+          )}
+        </div>
+
+        <aside className="space-y-4">
+          <div className="card p-6 sm:p-7">
+            <p className="text-sm font-semibold text-[#D4AF37]">Need to update something?</p>
+            <h2 className="mt-2 text-xl font-bold">Keep your details current</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Update your profile so K-Tech Technologies can reach you with project questions and updates.</p>
+            <Link href="/dashboard/profile" className="button secondary mt-5 inline-flex">View profile</Link>
+          </div>
+          {latest ? (
+            <div className="rounded-2xl border border-purple-100 bg-purple-50 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-purple-700">Latest request</p>
+              <p className="mt-2 font-semibold text-slate-900">{latest.business_name || 'Untitled project request'}</p>
+              <p className="mt-1 text-sm text-slate-600">{latest.project_status ?? statusLabels[latest.status] ?? latest.status}</p>
+              <Link href={`/dashboard/submissions/${latest.id}`} className="mt-4 inline-block text-sm font-semibold text-purple-700 hover:underline">View request →</Link>
+            </div>
+          ) : null}
+        </aside>
+      </section>
+
+      <div className="mt-8 flex justify-end"><SignOutButton /></div>
+    </main>
+  );
 }
