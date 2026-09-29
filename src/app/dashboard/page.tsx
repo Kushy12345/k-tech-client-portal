@@ -12,12 +12,12 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusStyles: Record<string, string> = {
-  'New Inquiry': 'bg-amber-50 text-amber-800 border-amber-200',
-  'Reviewing Requirements': 'bg-purple-50 text-purple-800 border-purple-200',
-  'Proposal Sent': 'bg-blue-50 text-blue-800 border-blue-200',
-  'Approved': 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  'In Progress': 'bg-sky-50 text-sky-800 border-sky-200',
-  'Completed': 'bg-slate-100 text-slate-700 border-slate-200',
+  'New Inquiry': 'bg-amber-400/10 text-amber-300 border-amber-400/30',
+  'Reviewing Requirements': 'bg-purple-500/10 text-purple-300 border-purple-400/30',
+  'Proposal Sent': 'bg-blue-500/10 text-blue-300 border-blue-400/30',
+  'Approved': 'bg-emerald-500/10 text-emerald-300 border-emerald-400/30',
+  'In Progress': 'bg-sky-500/10 text-sky-300 border-sky-400/30',
+  'Completed': 'bg-slate-800 text-slate-300 border-slate-700',
 };
 
 export default async function DashboardPage() {
