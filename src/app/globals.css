@@ -39,5 +39,5 @@ body {
   .button.accent { @apply bg-purple-600 text-white hover:bg-purple-700; }
   .portal-header { @apply border-b border-slate-800 bg-slate-950/90 text-slate-100 backdrop-blur; }
   .portal-muted { @apply text-slate-300; }
-  .portal-panel { @apply rounded-2xl border border-slate-800 bg-slate-900/80; }
+  .portal-panel { @apply rounded-2xl border border-slate-800 bg-slate-900; }
 }
