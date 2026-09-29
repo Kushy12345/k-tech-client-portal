@@ -36,4 +36,7 @@ body {
   .button.primary { @apply bg-yellow-600 text-slate-950 hover:bg-yellow-700; }
   .button.secondary { @apply border border-slate-700 bg-slate-900 text-slate-200 hover:border-purple-500 hover:bg-slate-800; }
   .button.accent { @apply bg-purple-600 text-white hover:bg-purple-700; }
+  .portal-header { @apply border-b border-slate-800 bg-slate-950/90 text-slate-100 backdrop-blur; }
+  .portal-muted { @apply text-slate-300; }
+  .portal-panel { @apply rounded-2xl border border-slate-800 bg-slate-900/80; }
 }
