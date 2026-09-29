@@ -95,7 +95,7 @@ export default async function DashboardPage() {
             <div className="card p-8 text-center sm:p-10">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FBF5D5] text-xl">+</div>
               <h3 className="mt-4 text-xl font-bold">Your next project starts here</h3>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Tell us what you want to build. The guided discovery form helps us understand your goals before we talk through the next step.</p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-300">Tell us what you want to build. The guided discovery form helps us understand your goals before we talk through the next step.</p>
               <Link href="/intake/general-digital-discovery" className="button primary mt-6 inline-flex">Start discovery</Link>
             </div>
           )}
