@@ -55,7 +55,7 @@ export default async function IntakePage({ params, searchParams }: { params: { s
         .filter((file) => file.question_id && file.filename)
         .map((file) => [file.question_id as string, file.filename as string]),
     ).entries(),
-  ).map(([questionId, filename]) => ({ questionId, filename }));
+  ).map(([questionId, filename]) => ({ questionId: questionKeys.get(questionId) ?? questionId, filename }));
 
   return (
     <IntakeForm
