@@ -34,7 +34,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { q?: 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Registered clients</p><p className="mt-2 text-3xl font-bold">{clientCount ?? 0}</p></div>
         <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Project requests</p><p className="mt-2 text-3xl font-bold">{requestCount ?? 0}</p></div>
-        <div className="card border-amber-200 bg-amber-50 p-5 sm:p-6"><p className="text-sm text-amber-700">New inquiries</p><p className="mt-2 text-3xl font-bold text-amber-900">{newCount ?? 0}</p></div>
+        <div className="card border-amber-400/30 bg-amber-400/10 p-5 sm:p-6"><p className="text-sm text-amber-300">New inquiries</p><p className="mt-2 text-3xl font-bold text-amber-200">{newCount ?? 0}</p></div>
         <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Completed</p><p className="mt-2 text-3xl font-bold">{completedCount ?? 0}</p></div>
       </section>
 
