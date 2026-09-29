@@ -30,7 +30,7 @@ export function PasswordResetForm({ recovery = false }: { recovery?: boolean }) 
   }
 
   return <form onSubmit={submit} className="card w-full max-w-md space-y-5">
-    <div><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Solutions</p><h1 className="mt-3 text-3xl font-bold">{recovery ? 'Set a new password' : 'Reset your password'}</h1><p className="mt-2 text-sm text-slate-600">{recovery ? 'Choose a strong password for your client account.' : 'We will email you a secure link to continue.'}</p></div>
+    <div><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Technologies</p><h1 className="mt-3 text-3xl font-bold">{recovery ? 'Set a new password' : 'Reset your password'}</h1><p className="mt-2 text-sm text-slate-600">{recovery ? 'Choose a strong password for your client account.' : 'We will email you a secure link to continue.'}</p></div>
     {recovery ? <label className="block text-sm font-semibold">New password<input required minLength={8} type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="field mt-2" autoComplete="new-password" /></label> : <label className="block text-sm font-semibold">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="field mt-2" autoComplete="email" /></label>}
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{message}</p>}
