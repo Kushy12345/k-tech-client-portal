@@ -30,7 +30,7 @@ body {
 
 
 @layer components {
-  .card { @apply rounded-2xl border border-slate-800 bg-slate-900/90 p-6 text-slate-100 shadow-xl shadow-black/10 sm:p-10; }
+  .card { @apply rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-100 shadow-xl shadow-black/10 sm:p-10; }
   .field { @apply w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20; }
   .choice { @apply flex cursor-pointer items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-200 transition hover:border-purple-500 has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-500/10; }
   .button { @apply rounded-xl px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
