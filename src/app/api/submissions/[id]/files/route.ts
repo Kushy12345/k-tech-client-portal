@@ -18,9 +18,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const formData = await request.formData();
   const file = formData.get('file');
   const questionId = formData.get('questionId');
+  const replaceFileId = formData.get('replaceFileId');
 
   if (!(file instanceof File) || typeof questionId !== 'string') {
     return NextResponse.json({ error: 'File and question are required.' }, { status: 400 });
+  }
+
+  if (replaceFileId !== null && typeof replaceFileId !== 'string') {
+    return NextResponse.json({ error: 'Invalid replacement target.' }, { status: 400 });
   }
 
   if (!allowedFiles.has(file.type) || file.size <= 0 || file.size > 10 * 1024 * 1024) {
@@ -79,17 +84,31 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: 'Unable to save the file record.' }, { status: 500 });
   }
 
-  const { data: previousFiles } = await supabase
-    .from('submission_files')
-    .select('id, storage_path')
-    .eq('submission_id', submission.id)
-    .eq('question_id', question.id)
-    .neq('id', fileRow.id);
+  if (replaceFileId) {
+    const { data: previousFile } = await supabase
+      .from('submission_files')
+      .select('id, storage_path, question_id')
+      .eq('id', replaceFileId)
+      .eq('submission_id', submission.id)
+      .maybeSingle();
 
-  if (previousFiles?.length) {
-    const oldPaths = previousFiles.map((item) => item.storage_path);
-    await supabase.storage.from('submission-assets').remove(oldPaths);
-    await supabase.from('submission_files').delete().in('id', previousFiles.map((item) => item.id));
+    if (!previousFile || previousFile.question_id !== question.id) {
+      await supabase.storage.from('submission-assets').remove([path]);
+      await supabase.from('submission_files').delete().eq('id', fileRow.id);
+      return NextResponse.json({ error: 'The file to replace was not found.' }, { status: 404 });
+    }
+
+    await supabase.storage.from('submission-assets').remove([previousFile.storage_path]);
+    const { error: deleteError } = await supabase
+      .from('submission_files')
+      .delete()
+      .eq('id', previousFile.id);
+
+    if (deleteError) {
+      await supabase.storage.from('submission-assets').remove([path]);
+      await supabase.from('submission_files').delete().eq('id', fileRow.id);
+      return NextResponse.json({ error: 'Unable to replace the existing file.' }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ ok: true, fileId: fileRow.id });
