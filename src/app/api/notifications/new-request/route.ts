@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  })[character] ?? character);
+}
+
 export async function POST(request: Request) {
   try {
     const { submissionId } = await request.json();
@@ -18,7 +28,7 @@ export async function POST(request: Request) {
 
     const { data: submission, error: submissionError } = await supabase
       .from('form_submissions')
-      .select('id, business_name, contact_name, contact_email, status, is_draft, submitted_at, template_id')
+      .select('id, business_name, contact_name, contact_email, status, is_draft, submitted_at')
       .eq('id', submissionId)
       .eq('user_id', userData.user.id)
       .eq('is_draft', false)
@@ -39,10 +49,13 @@ export async function POST(request: Request) {
 
     const origin = new URL(request.url).origin;
     const requestUrl = `${origin}/admin/submissions/${submission.id}`;
-    const clientName = submission.contact_name || 'A new client';
-    const businessName = submission.business_name || 'Website & Digital Solution Discovery';
+    const clientName = escapeHtml(submission.contact_name || 'A new client');
+    const businessName = escapeHtml(submission.business_name || 'Website & Digital Solution Discovery');
+    const clientEmail = escapeHtml(submission.contact_email || 'Not provided');
+    const requestStatus = escapeHtml(submission.status);
+    const reference = escapeHtml(submission.id);
     const submittedAt = submission.submitted_at
-      ? new Date(submission.submitted_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })
+      ? escapeHtml(new Date(submission.submitted_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }))
       : 'Just now';
 
     const response = await fetch('https://api.resend.com/emails', {
@@ -54,7 +67,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         from: fromEmail,
         to: [notificationEmail],
-        subject: `New project request from ${clientName}`,
+        subject: `New project request from ${clientName.replace(/&amp;/g, '&')}`,
         html: `
           <div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;max-width:640px">
             <h2 style="margin-bottom:8px">New K-Tech project request</h2>
@@ -62,10 +75,10 @@ export async function POST(request: Request) {
             <table style="border-collapse:collapse;width:100%;margin:20px 0">
               <tr><td style="padding:8px 0;font-weight:bold">Client</td><td style="padding:8px 0">${clientName}</td></tr>
               <tr><td style="padding:8px 0;font-weight:bold">Business</td><td style="padding:8px 0">${businessName}</td></tr>
-              <tr><td style="padding:8px 0;font-weight:bold">Email</td><td style="padding:8px 0">${submission.contact_email || 'Not provided'}</td></tr>
-              <tr><td style="padding:8px 0;font-weight:bold">Status</td><td style="padding:8px 0">${submission.status}</td></tr>
+              <tr><td style="padding:8px 0;font-weight:bold">Email</td><td style="padding:8px 0">${clientEmail}</td></tr>
+              <tr><td style="padding:8px 0;font-weight:bold">Status</td><td style="padding:8px 0">${requestStatus}</td></tr>
               <tr><td style="padding:8px 0;font-weight:bold">Submitted</td><td style="padding:8px 0">${submittedAt}</td></tr>
-              <tr><td style="padding:8px 0;font-weight:bold">Reference</td><td style="padding:8px 0">${submission.id}</td></tr>
+              <tr><td style="padding:8px 0;font-weight:bold">Reference</td><td style="padding:8px 0">${reference}</td></tr>
             </table>
             <p><a href="${requestUrl}" style="display:inline-block;padding:12px 18px;background:#172033;color:#fff;text-decoration:none;border-radius:8px">View Request</a></p>
           </div>
