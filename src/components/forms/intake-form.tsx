@@ -47,7 +47,7 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm<Answers>({
     mode: 'onBlur',
     defaultValues: initialAnswers,
-    shouldUnregister: true,
+    shouldUnregister: false,
   });
 
   useEffect(() => {
@@ -63,16 +63,16 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
   const currentQuestions = useMemo(() => questions.filter((question) => question.section_id === currentSection?.id), [currentSection?.id, questions]);
   const values = watch();
 
-  const save = async (answers: Answers, draft: boolean) => {
+  const save = async (answers: Answers, draft: boolean): Promise<boolean> => {
     setStatus('saving');
     const normalizedAnswers = Object.fromEntries(
       Object.entries(answers).filter(([, answer]) => answer !== undefined),
     ) as Answers;
     const parsed = answerSchema.safeParse(normalizedAnswers);
-    if (!parsed.success) { setStatus('error'); return; }
+    if (!parsed.success) { setStatus('error'); return false; }
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) { window.location.href = `/login?redirect=/intake/${template.slug}`; return; }
+    if (!userData.user) { window.location.href = `/login?redirect=/intake/${template.slug}`; return false; }
     const summary = { business_name: normalizedAnswers.business_name ?? '', contact_name: normalizedAnswers.contact_name ?? '', contact_email: normalizedAnswers.contact_email ?? '' } as unknown as Json;
     const { data: submission, error } = await supabase.from('form_submissions').upsert({
       id: submissionId,
@@ -86,25 +86,24 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
       is_draft: draft,
       submitted_at: draft ? null : new Date().toISOString(),
     }).select('id').single();
-    if (error || !submission) { setStatus('error'); return; }
+    if (error || !submission) { setStatus('error'); return false; }
     setSubmissionId(submission.id);
-    setHasChanges(false);
     const answerRows = Object.entries(normalizedAnswers).map(([key, answer]) => {
       const question = questions.find((candidate) => candidate.key === key);
       return { submission_id: submission.id, question_id: question?.id ?? null, answer_text: typeof answer === 'string' ? answer : null, answer_json: Array.isArray(answer) ? answer : null };
     });
     await supabase.from('form_answers').delete().eq('submission_id', submission.id);
     const { error: answerError } = await supabase.from('form_answers').insert(answerRows);
-    if (answerError) { setStatus('error'); return; }
+    if (answerError) { setStatus('error'); return false; }
     for (const [key, file] of Object.entries(files)) {
       const question = questions.find((candidate) => candidate.key === key);
       if (!question) continue;
       const extension = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
       const path = `${userData.user.id}/${submission.id}/${question.id}-${crypto.randomUUID()}.${extension}`;
       const { error: uploadError } = await supabase.storage.from('submission-assets').upload(path, file, { contentType: file.type, upsert: false });
-      if (uploadError) { setStatus('error'); return; }
+      if (uploadError) { setStatus('error'); return false; }
       const { error: fileError } = await supabase.from('submission_files').insert({ submission_id: submission.id, question_id: question.id, storage_path: path, filename: file.name, mime_type: file.type, size_bytes: file.size });
-      if (fileError) { setStatus('error'); return; }
+      if (fileError) { setStatus('error'); return false; }
     }
 
     if (!draft) {
@@ -122,7 +121,9 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
       }
     }
 
+    setHasChanges(false);
     setStatus(draft ? 'idle' : 'success');
+    return true;
   };
 
   if (status === 'success') return <main className="mx-auto flex min-h-screen max-w-3xl items-center px-6 py-16"><div className="card w-full text-center"><div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-2xl text-emerald-400">✓</div><h1 className="text-3xl font-bold text-white">Thanks, we have your requirements.</h1><p className="mt-3 text-slate-300">Our team will review your discovery submission and be in touch shortly.</p><p className="mt-6 text-xs text-slate-400">Reference: {submissionId}</p><div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"><a href="/dashboard" className="button primary inline-flex">Go to dashboard</a><span className="button secondary inline-flex"><SignOutButton /></span></div></div></main>;
@@ -135,7 +136,9 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
     void handleSubmit((answers) => save(answers, false), onInvalid)();
   };
   const saveDraftAndExit = () => {
-    void save(values, true).then(() => { window.location.assign('/dashboard'); });
+    void save(values, true).then((saved) => {
+      if (saved) window.location.assign('/dashboard');
+    });
   };
   const leaveForm = () => {
     if (hasChanges && !window.confirm('Leave this form? Your unsaved changes will be lost.')) return;
