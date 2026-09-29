@@ -40,7 +40,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { q?: 
 
       <section className="mt-8">
         <div className="mb-4"><p className="text-sm font-semibold text-[#7C3AED]">Pipeline</p><h2 className="mt-1 text-2xl font-bold">Project requests</h2></div>
-        <form className="grid gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:grid-cols-[1fr_220px_auto]">
+        <form className="grid gap-3 portal-panel p-4 sm:grid-cols-[1fr_220px_auto]">
           <input name="q" defaultValue={searchParams.q} className="field" placeholder="Search client, business, or email" />
           <select name="status" defaultValue={searchParams.status ?? ''} className="field"><option value="">All statuses</option>{PROJECT_STATUSES.map((status) => <option key={status}>{status}</option>)}</select>
           <button className="button primary">Filter</button>
