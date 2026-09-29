@@ -26,9 +26,9 @@ export function ProjectStatusForm({ id, initialStatus }: { id: string; initialSt
   }
 
   return <form onSubmit={save} className="card space-y-5">
-    <div><h2 className="text-xl font-bold">Project management</h2><p className="mt-1 text-sm text-slate-600">Update lifecycle status and leave an internal note for the team.</p></div>
+    <div><h2 className="text-xl font-bold">Project management</h2><p className="mt-1 text-sm text-slate-300">Update lifecycle status and leave an internal note for the team.</p></div>
     <label className="block text-sm font-semibold">Project status<select value={status} onChange={(event) => setStatus(event.target.value as ProjectStatus)} className="field mt-2">{PROJECT_STATUSES.map((item) => <option key={item}>{item}</option>)}</select></label>
-    <label className="block text-sm font-semibold">Internal note<span className="ml-1 font-normal text-slate-500">(optional)</span><textarea value={note} onChange={(event) => setNote(event.target.value)} rows={4} className="field mt-2" placeholder="Add context for the K-Tech team..." /></label>
+    <label className="block text-sm font-semibold">Internal note<span className="ml-1 font-normal text-slate-400">(optional)</span><textarea value={note} onChange={(event) => setNote(event.target.value)} rows={4} className="field mt-2" placeholder="Add context for the K-Tech team..." /></label>
     {message && <p role="status" className="text-sm text-slate-600">{message}</p>}
     <button className="button primary" disabled={saving}>{saving ? 'Saving...' : 'Save changes'}</button>
   </form>;
