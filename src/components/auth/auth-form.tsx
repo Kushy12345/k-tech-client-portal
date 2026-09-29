@@ -115,9 +115,9 @@ export function AuthForm({ mode, initialError, redirectPath }: AuthFormProps) {
       {error && <p role="alert" className="rounded-lg border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
       {message && <p role="status" className="rounded-lg border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">{message}</p>}
       <button className="button primary w-full" disabled={loading}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}</button>
-      <p className="text-center text-sm text-slate-600">
+      <p className="text-center text-sm text-slate-400">
         {mode === 'login' ? 'New to K-Tech? ' : 'Already have an account? '}
-        <a href={mode === 'login' ? '/register' : '/login'} className="font-semibold text-[#7C3AED] hover:text-[#5B21B6] hover:underline">{mode === 'login' ? 'Create an account' : 'Sign in'}</a>
+        <a href={mode === 'login' ? '/register' : '/login'} className="font-semibold text-[#7C3AED] hover:text-[#D4AF37] hover:underline">{mode === 'login' ? 'Create an account' : 'Sign in'}</a>
       </p>
       {mode === 'login' && <Link href="/forgot-password" className="block text-center text-sm font-semibold text-[#7C3AED] hover:text-[#5B21B6] hover:underline">Forgot your password?</Link>}
     </form>
