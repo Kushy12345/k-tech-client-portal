@@ -59,7 +59,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Total requests</p><p className="mt-2 text-3xl font-bold">{total}</p><p className="mt-1 text-xs text-slate-500">Everything you've started</p></div>
+        <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Total requests</p><p className="mt-2 text-3xl font-bold">{total}</p><p className="mt-1 text-xs text-slate-500">Everything you have started</p></div>
         <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Active</p><p className="mt-2 text-3xl font-bold">{active}</p><p className="mt-1 text-xs text-slate-500">Requests still moving forward</p></div>
         <div className="card p-5 sm:p-6"><p className="text-sm text-slate-500">Completed</p><p className="mt-2 text-3xl font-bold">{completed}</p><p className="mt-1 text-xs text-slate-500">Projects marked complete</p></div>
       </section>
