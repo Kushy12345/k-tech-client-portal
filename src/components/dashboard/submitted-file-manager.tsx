@@ -23,60 +23,45 @@ const allowedTypes = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
 
-function FileItem({
+function FileAction({
+  label,
   submissionId,
-  question,
-  current,
+  questionId,
+  replaceFileId,
   busy,
   onUpload,
 }: {
+  label: string;
   submissionId: string;
-  question: FileQuestion;
-  current?: SubmissionFile;
+  questionId: string;
+  replaceFileId?: string;
   busy: boolean;
-  onUpload: (questionId: string, file: File) => void;
+  onUpload: (questionId: string, file: File, replaceFileId?: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">{question.label}</p>
-          {current ? (
-            <a
-              href={`/api/submissions/${submissionId}/files/${current.id}`}
-              className="mt-1 block truncate text-sm text-purple-300 hover:text-white hover:underline"
-            >
-              {current.filename}
-            </a>
-          ) : (
-            <p className="mt-1 text-sm text-slate-500">No file uploaded yet.</p>
-          )}
-        </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept={accept}
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) onUpload(question.id, file);
-            event.target.value = '';
-          }}
-        />
-
-        <button
-          type="button"
-          className="button secondary shrink-0"
-          disabled={busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? 'Uploading...' : current ? 'Replace file' : 'Add file'}
-        </button>
-      </div>
-    </div>
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) onUpload(questionId, file, replaceFileId);
+          event.target.value = '';
+        }}
+      />
+      <button
+        type="button"
+        className="button secondary shrink-0"
+        disabled={busy}
+        onClick={() => inputRef.current?.click()}
+      >
+        {busy ? 'Uploading...' : label}
+      </button>
+    </>
   );
 }
 
@@ -89,10 +74,11 @@ export function SubmittedFileManager({
   questions: FileQuestion[];
   files: SubmissionFile[];
 }) {
-  const [busyQuestion, setBusyQuestion] = useState<string>();
+  const [busyFileId, setBusyFileId] = useState<string>();
+  const [busyQuestionId, setBusyQuestionId] = useState<string>();
   const [message, setMessage] = useState<string>();
 
-  async function upload(questionId: string, file: File) {
+  async function upload(questionId: string, file: File, replaceFileId?: string) {
     setMessage(undefined);
 
     if (!allowedTypes.has(file.type) || file.size <= 0 || file.size > 10 * 1024 * 1024) {
@@ -100,12 +86,14 @@ export function SubmittedFileManager({
       return;
     }
 
-    setBusyQuestion(questionId);
+    if (replaceFileId) setBusyFileId(replaceFileId);
+    else setBusyQuestionId(questionId);
 
     try {
       const body = new FormData();
       body.set('questionId', questionId);
       body.set('file', file);
+      if (replaceFileId) body.set('replaceFileId', replaceFileId);
 
       const response = await fetch(`/api/submissions/${submissionId}/files`, {
         method: 'POST',
@@ -122,7 +110,8 @@ export function SubmittedFileManager({
     } catch {
       setMessage('Something went wrong while updating the file. Please try again.');
     } finally {
-      setBusyQuestion(undefined);
+      setBusyFileId(undefined);
+      setBusyQuestionId(undefined);
     }
   }
 
@@ -131,21 +120,58 @@ export function SubmittedFileManager({
       <div>
         <h3 className="font-semibold">Supporting files</h3>
         <p className="mt-1 text-sm text-slate-400">
-          Add a missing file or replace an existing one without changing your submitted requirements.
+          Keep your existing files, add more when needed, or replace one specific file.
         </p>
       </div>
 
-      <div className="mt-4 space-y-3">
-        {questions.map((question) => (
-          <FileItem
-            key={question.id}
-            submissionId={submissionId}
-            question={question}
-            current={files.find((file) => file.question_id === question.id)}
-            busy={busyQuestion === question.id}
-            onUpload={upload}
-          />
-        ))}
+      <div className="mt-4 space-y-4">
+        {questions.map((question) => {
+          const currentFiles = files.filter((file) => file.question_id === question.id);
+
+          return (
+            <div key={question.id} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{question.label}</p>
+                  {!currentFiles.length && (
+                    <p className="mt-1 text-sm text-slate-500">No file uploaded yet.</p>
+                  )}
+
+                  {currentFiles.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {currentFiles.map((file) => (
+                        <div key={file.id} className="flex flex-col gap-2 rounded-lg border border-slate-800 bg-slate-900/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+                          <a
+                            href={`/api/submissions/${submissionId}/files/${file.id}`}
+                            className="min-w-0 truncate text-sm text-purple-300 hover:text-white hover:underline"
+                          >
+                            {file.filename}
+                          </a>
+                          <FileAction
+                            label="Replace"
+                            submissionId={submissionId}
+                            questionId={question.id}
+                            replaceFileId={file.id}
+                            busy={busyFileId === file.id}
+                            onUpload={upload}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <FileAction
+                  label={currentFiles.length ? 'Add another' : 'Add file'}
+                  submissionId={submissionId}
+                  questionId={question.id}
+                  busy={busyQuestionId === question.id}
+                  onUpload={upload}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {message && (
