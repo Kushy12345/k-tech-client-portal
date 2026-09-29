@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { IntakeForm } from '@/components/forms/intake-form';
 import type { FormQuestion, FormSection, FormTemplate } from '@/types/forms.types';
 
-export default async function IntakePage({ params }: { params: { slug: string } }) {
+export default async function IntakePage({ params, searchParams }: { params: { slug: string }; searchParams: { draft?: string } }) {
   const supabase = await createClient();
   const { data: template } = await supabase
     .from('form_templates')
@@ -15,13 +15,20 @@ export default async function IntakePage({ params }: { params: { slug: string } 
   if (!template) notFound();
 
   const { data: { user } } = await supabase.auth.getUser();
-  const [{ data: sections }, { data: questions }, { data: draft }] = await Promise.all([
+  const [{ data: sections }, { data: questions }] = await Promise.all([
     supabase.from('form_sections').select('*').eq('template_id', template.id).order('position'),
     supabase.from('form_questions').select('*').eq('template_id', template.id).order('position'),
-    user
-      ? supabase.from('form_submissions').select('id').eq('template_id', template.id).eq('user_id', user.id).eq('is_draft', true).order('updated_at', { ascending: false }).limit(1).maybeSingle()
-      : Promise.resolve({ data: null }),
   ]);
+
+  const draftQuery = user
+    ? supabase.from('form_submissions').select('id').eq('template_id', template.id).eq('user_id', user.id).eq('is_draft', true)
+    : null;
+  const { data: draft } = draftQuery
+    ? searchParams.draft
+      ? await draftQuery.eq('id', searchParams.draft).maybeSingle()
+      : await draftQuery.order('updated_at', { ascending: false }).limit(1).maybeSingle()
+    : { data: null };
+
   const { data: draftAnswers } = draft
     ? await supabase.from('form_answers').select('question_id, answer_text, answer_json').eq('submission_id', draft.id)
     : { data: [] };
