@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm, type FieldErrors, type UseFormRegister } from 'react-hook-form';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/client';
@@ -43,11 +43,22 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [submissionId, setSubmissionId] = useState<string | undefined>(initialSubmissionId);
   const [files, setFiles] = useState<Record<string, File>>({});
+  const [hasChanges, setHasChanges] = useState(false);
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm<Answers>({
     mode: 'onBlur',
     defaultValues: initialAnswers,
     shouldUnregister: true,
   });
+
+  useEffect(() => {
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasChanges || status === 'saving' || status === 'success') return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, [hasChanges, status]);
   const currentSection = sections[step];
   const currentQuestions = useMemo(() => questions.filter((question) => question.section_id === currentSection?.id), [currentSection?.id, questions]);
   const values = watch();
@@ -77,6 +88,7 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
     }).select('id').single();
     if (error || !submission) { setStatus('error'); return; }
     setSubmissionId(submission.id);
+    setHasChanges(false);
     const answerRows = Object.entries(normalizedAnswers).map(([key, answer]) => {
       const question = questions.find((candidate) => candidate.key === key);
       return { submission_id: submission.id, question_id: question?.id ?? null, answer_text: typeof answer === 'string' ? answer : null, answer_json: Array.isArray(answer) ? answer : null };
@@ -122,16 +134,23 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
   const submitFinal = () => {
     void handleSubmit((answers) => save(answers, false), onInvalid)();
   };
+  const saveDraftAndExit = () => {
+    void save(values, true).then(() => { window.location.assign('/dashboard'); });
+  };
+  const leaveForm = () => {
+    if (hasChanges && !window.confirm('Leave this form? Your unsaved changes will be lost.')) return;
+    window.location.assign('/dashboard');
+  };
 
   return <main className="min-h-screen px-4 py-8 sm:px-6 lg:py-14">
     <div className="mx-auto max-w-5xl">
-      <header className="mb-8"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Technologies</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{template.name}</h1><p className="mt-3 max-w-2xl text-slate-300">{template.description}</p></header>
+      <header className="mb-8"><div className="mb-6 flex items-center justify-between gap-4"><button type="button" onClick={leaveForm} className="text-sm font-semibold text-slate-300 transition hover:text-white">← Back to dashboard</button><button type="button" onClick={saveDraftAndExit} disabled={status === 'saving'} className="button secondary">{status === 'saving' ? 'Saving...' : 'Save & exit'}</button></div><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Technologies</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{template.name}</h1><p className="mt-3 max-w-2xl text-slate-300">{template.description}</p></header>
       <div className="mb-8"><div className="mb-3 flex items-center justify-between text-sm font-medium"><span>Step {step + 1} of {sections.length}</span><span>{Math.round(((step + 1) / sections.length) * 100)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-[#D4AF37] transition-all" style={{ width: `${((step + 1) / sections.length) * 100}%` }} /></div></div>
-      <form onSubmit={(event) => event.preventDefault()} className="card">
+      <form onChange={() => setHasChanges(true)} onSubmit={(event) => event.preventDefault()} className="card">
         <div className="mb-8 border-b pb-6"><p className="text-sm font-semibold text-[#D4AF37]">Section {step + 1}</p><h2 className="mt-1 text-2xl font-bold">{currentSection?.title}</h2><p className="mt-2 text-slate-300">{currentSection?.description}</p></div>
         <div className="space-y-7">{currentQuestions.map((question) => <div key={question.id}><label htmlFor={question.key ?? question.id} className="mb-2 block font-semibold">{question.label}{question.required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}</label>{question.help_text && <p className="mb-2 text-sm text-slate-400">{question.help_text}</p>}<Field question={question} register={register} value={values[question.key ?? question.id]} onFileChange={(file) => { const key = question.key ?? question.id; setFiles((current) => { const next = { ...current }; if (file) next[key] = file; else delete next[key]; return next; }); }} onMultiChange={(option, checked) => { const key = question.key ?? question.id; const current = Array.isArray(values[key]) ? values[key] : []; setValue(key, checked ? [...current, option] : current.filter((item) => item !== option), { shouldValidate: true }); }} />{errors[question.key ?? question.id] && <p role="alert" className="mt-2 text-sm text-red-600">Please complete this field.</p>}</div>)}</div>
         {status === 'error' && <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">Please check the highlighted fields and try again.</p>}
-        <div className="mt-10 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><button type="button" className="button secondary" disabled={step === 0 || status === 'saving'} onClick={() => setStep((current) => current - 1)}>Previous</button><div className="flex flex-col gap-3 sm:flex-row"><button type="button" className="button secondary" disabled={status === 'saving'} onClick={handleSubmit((answers) => save(answers, true), onInvalid)}>{status === 'saving' ? 'Saving...' : 'Save draft'}</button>{step < sections.length - 1 ? <button type="button" className="button primary" onClick={async () => { const valid = await validateCurrentSection(); if (valid) setStep((current) => current + 1); }}>Next section</button> : <button type="button" className="button primary" disabled={status === 'saving'} onClick={submitFinal}>Submit requirements</button>}</div></div>
+        <div className="mt-10 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><button type="button" className="button secondary" disabled={step === 0 || status === 'saving'} onClick={() => setStep((current) => current - 1)}>Previous</button><div className="flex flex-col gap-3 sm:flex-row"><button type="button" className="button secondary" disabled={status === 'saving'} onClick={() => save(values, true)}>{status === 'saving' ? 'Saving...' : 'Save draft'}</button>{step < sections.length - 1 ? <button type="button" className="button primary" onClick={async () => { const valid = await validateCurrentSection(); if (valid) setStep((current) => current + 1); }}>Next section</button> : <button type="button" className="button primary" disabled={status === 'saving'} onClick={submitFinal}>Submit requirements</button>}</div></div>
       </form>
     </div>
   </main>;
