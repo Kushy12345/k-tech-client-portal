@@ -45,7 +45,7 @@ sections AS (
 questions AS (
   SELECT *
   FROM (VALUES
-    (1, 'business_name', 'Business or organisation name', 'text', true, 'e.g. K-Tech Solutions', NULL::jsonb),
+    (1, 'business_name', 'Business or organisation name', 'text', true, 'e.g. K-Tech Technologies', NULL::jsonb),
     (1, 'contact_name', 'Contact person''s name', 'text', true, 'Your full name', NULL::jsonb),
     (1, 'contact_email', 'Email address', 'email', true, 'you@company.com', NULL::jsonb),
     (1, 'contact_phone', 'Phone number', 'phone', true, '+234...', NULL::jsonb),
