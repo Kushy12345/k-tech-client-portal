@@ -60,7 +60,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { q?: 
               </Link>
             ))}
           </div></div>
-        ) : <div className="card text-center text-sm text-slate-600">No submissions match your filters.</div>}
+        ) : <div className="card text-center text-sm text-slate-300">No submissions match your filters.</div>}
       </section>
 
       <p className="mt-6 text-xs leading-5 text-slate-500">Visitor traffic is tracked separately through Vercel Web Analytics. The counters above reflect authenticated portal activity and project requests stored in Supabase.</p>
