@@ -1,4 +1,4 @@
-'use client';
+use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -36,68 +36,74 @@ export function AuthForm({ mode, initialError, redirectPath }: AuthFormProps) {
     setLoading(true);
     setError('');
     setMessage('');
-    const supabase = createClient();
-    const result = mode === 'login'
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: name },
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
-        });
 
-    if (result.error) {
-      setError(result.error.message.includes('Invalid login credentials')
-        ? 'The email or password is incorrect.'
-        : result.error.message);
+    try {
+      const supabase = createClient();
+      const result = mode === 'login'
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { full_name: name },
+              emailRedirectTo: `${window.location.origin}/auth/callback`,
+            },
+          });
+
+      if (result.error) {
+        setError(result.error.message.includes('Invalid login credentials')
+          ? 'The email or password is incorrect.'
+          : result.error.message);
+        return;
+      }
+
+      if (mode === 'register' && !result.data.session) {
+        setMessage('Check your email to confirm your account, then return here to sign in.');
+        return;
+      }
+
+      if (mode === 'register') {
+        window.location.assign('/dashboard');
+        return;
+      }
+
+      const safeRedirectPath = getSafeRedirectPath(redirectPath);
+      if (safeRedirectPath) {
+        window.location.assign(safeRedirectPath);
+        return;
+      }
+
+      if (!result.data.user) {
+        setError('We could not complete your sign-in. Please try again.');
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', result.data.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        setError('We could not verify your account permissions. Please try again.');
+        return;
+      }
+
+      window.location.assign(profile?.role === 'admin' ? '/admin' : '/dashboard');
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : '';
+      setError(message === 'Failed to fetch'
+        ? 'We could not reach the sign-in service. The portal may need its Supabase connection configured correctly.'
+        : 'Something went wrong while signing you in. Please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (mode === 'register' && !result.data.session) {
-      setMessage('Check your email to confirm your account, then return here to sign in.');
-      setLoading(false);
-      return;
-    }
-
-    if (mode === 'register') {
-      window.location.assign('/dashboard');
-      return;
-    }
-
-    const safeRedirectPath = getSafeRedirectPath(redirectPath);
-    if (safeRedirectPath) {
-      window.location.assign(safeRedirectPath);
-      return;
-    }
-
-    if (!result.data.user) {
-      setError('We could not complete your sign-in. Please try again.');
-      setLoading(false);
-      return;
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', result.data.user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      setError('We could not verify your account permissions. Please try again.');
-      setLoading(false);
-      return;
-    }
-
-    window.location.assign(profile?.role === 'admin' ? '/admin' : '/dashboard');
   }
 
   return (
     <form onSubmit={submit} className="card w-full max-w-md space-y-5">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Solutions</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Technologies</p>
         <h1 className="mt-3 text-3xl font-bold">{mode === 'login' ? 'Welcome back' : 'Create your client account'}</h1>
         <p className="mt-2 text-sm text-slate-600">
           {mode === 'login' ? 'Continue managing your project discovery and requests.' : 'Save your progress and keep project conversations in one place.'}
