@@ -53,8 +53,6 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
 
   const save = async (answers: Answers, draft: boolean) => {
     setStatus('saving');
-    // Untouched optional controls can be omitted by RHF. Required controls
-    // have already passed their question-level validation before this runs.
     const normalizedAnswers = Object.fromEntries(
       Object.entries(answers).filter(([, answer]) => answer !== undefined),
     ) as Answers;
@@ -95,6 +93,22 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
       const { error: fileError } = await supabase.from('submission_files').insert({ submission_id: submission.id, question_id: question.id, storage_path: path, filename: file.name, mime_type: file.type, size_bytes: file.size });
       if (fileError) { setStatus('error'); return; }
     }
+
+    if (!draft) {
+      try {
+        const notificationResponse = await fetch('/api/notifications/new-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ submissionId: submission.id }),
+        });
+        if (!notificationResponse.ok) {
+          console.error('New request notification was not sent:', notificationResponse.status);
+        }
+      } catch (notificationError) {
+        console.error('New request notification failed:', notificationError);
+      }
+    }
+
     setStatus(draft ? 'idle' : 'success');
   };
 
