@@ -15,5 +15,5 @@ export function SignOutButton() {
   window.location.assign('/login');
 }
 
-  return <button onClick={signOut} className="text-sm font-semibold text-slate-600 hover:text-slate-950">Sign out</button>;
+  return <button onClick={signOut} className="text-sm font-semibold text-slate-300 hover:text-white">Sign out</button>;
 }
