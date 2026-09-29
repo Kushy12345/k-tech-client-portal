@@ -5,6 +5,7 @@ import { useForm, type FieldErrors, type UseFormRegister } from 'react-hook-form
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/client';
 import type { FormQuestion, FormSection, FormTemplate, Json } from '@/types/forms.types';
+import { SignOutButton } from '@/components/dashboard/sign-out-button';
 
 type Answers = Record<string, string | string[]>;
 const answerSchema = z.record(z.union([z.string(), z.array(z.string())]));
@@ -112,7 +113,7 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
     setStatus(draft ? 'idle' : 'success');
   };
 
-  if (status === 'success') return <main className="mx-auto flex min-h-screen max-w-3xl items-center px-6 py-16"><div className="card w-full text-center"><div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-2xl text-emerald-400">✓</div><h1 className="text-3xl font-bold text-white">Thanks, we have your requirements.</h1><p className="mt-3 text-slate-300">Our team will review your discovery submission and be in touch shortly.</p><p className="mt-6 text-xs text-slate-400">Reference: {submissionId}</p><div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"><a href="/dashboard" className="button primary inline-flex">Go to dashboard</a><a href="/login" className="button secondary inline-flex">Sign out</a></div></div></main>;
+  if (status === 'success') return <main className="mx-auto flex min-h-screen max-w-3xl items-center px-6 py-16"><div className="card w-full text-center"><div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-2xl text-emerald-400">✓</div><h1 className="text-3xl font-bold text-white">Thanks, we have your requirements.</h1><p className="mt-3 text-slate-300">Our team will review your discovery submission and be in touch shortly.</p><p className="mt-6 text-xs text-slate-400">Reference: {submissionId}</p><div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"><a href="/dashboard" className="button primary inline-flex">Go to dashboard</a><span className="button secondary inline-flex"><SignOutButton /></span></div></div></main>;
   const onInvalid = (formErrors: FieldErrors<Answers>) => { if (Object.keys(formErrors).length) setStatus('error'); };
   const validateCurrentSection = async () => {
     const fieldNames = currentQuestions.map((question) => question.key ?? question.id);
