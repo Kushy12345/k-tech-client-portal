@@ -5,7 +5,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-20 lg:px-12">
         <div className="flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">K-Tech Solutions</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">K-Tech Technologies</p>
           <nav aria-label="Account navigation" className="flex items-center gap-4 text-sm font-semibold">
             <Link href="/login" className="text-slate-200 transition hover:text-white">Login</Link>
             <Link href="/register" className="rounded-lg border border-purple-400 px-4 py-2 text-white transition hover:border-purple-300">Create account</Link>
