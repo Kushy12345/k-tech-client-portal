@@ -27,7 +27,7 @@ export default async function DashboardPage() {
 
   const { data: submissions } = await supabase
     .from('form_submissions')
-    .select('id, business_name, status, project_status, created_at, submitted_at, template_id')
+    .select('id, business_name, status, project_status, created_at, submitted_at, template_id, is_draft')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -80,9 +80,9 @@ export default async function DashboardPage() {
                     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                       <div>
                         <p className="font-semibold group-hover:text-[#5B21B6]">{projectTitle(submission)}</p>
-                        <p className="mt-1 text-sm text-slate-500">{submission.submitted_at ? 'Submitted' : 'Started'} {new Date(submission.submitted_at ?? submission.created_at).toLocaleDateString()}</p>
+                        <p className="mt-1 text-sm text-slate-500">{submission.is_draft ? 'Last saved' : submission.submitted_at ? 'Submitted' : 'Started'} {new Date(submission.submitted_at ?? submission.created_at).toLocaleDateString()}</p>
                       </div>
-                      <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${statusStyles[status] ?? 'bg-slate-100 text-slate-700 border-slate-200'}`}>{status}</span>
+                      <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${submission.is_draft ? 'border-amber-400/30 bg-amber-400/10 text-amber-300' : statusStyles[status] ?? 'border-slate-700 bg-slate-800 text-slate-300'}`}>{submission.is_draft ? 'Draft' : status}</span>
                     </div>
                   </Link>
                 );
