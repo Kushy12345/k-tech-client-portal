@@ -62,6 +62,8 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
   const currentSection = sections[step];
   const currentQuestions = useMemo(() => questions.filter((question) => question.section_id === currentSection?.id), [currentSection?.id, questions]);
   const values = watch();
+  const hasAnswerValues = Object.values(values).some((value) => Array.isArray(value) ? value.length > 0 : typeof value === 'string' ? value.trim().length > 0 : Boolean(value));
+  const hasDraftContent = hasAnswerValues || Object.keys(files).length > 0;
 
   const save = async (answers: Answers, draft: boolean): Promise<boolean> => {
     setStatus('saving');
@@ -136,6 +138,10 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
     void handleSubmit((answers) => save(answers, false), onInvalid)();
   };
   const saveDraftAndExit = () => {
+    if (!hasDraftContent) {
+      window.location.assign('/dashboard');
+      return;
+    }
     void save(values, true).then((saved) => {
       if (saved) window.location.assign('/dashboard');
     });
@@ -153,7 +159,7 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
         <div className="mb-8 border-b pb-6"><p className="text-sm font-semibold text-[#D4AF37]">Section {step + 1}</p><h2 className="mt-1 text-2xl font-bold">{currentSection?.title}</h2><p className="mt-2 text-slate-300">{currentSection?.description}</p></div>
         <div className="space-y-7">{currentQuestions.map((question) => <div key={question.id}><label htmlFor={question.key ?? question.id} className="mb-2 block font-semibold">{question.label}{question.required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}</label>{question.help_text && <p className="mb-2 text-sm text-slate-400">{question.help_text}</p>}<Field question={question} register={register} value={values[question.key ?? question.id]} onFileChange={(file) => { const key = question.key ?? question.id; setFiles((current) => { const next = { ...current }; if (file) next[key] = file; else delete next[key]; return next; }); }} onMultiChange={(option, checked) => { const key = question.key ?? question.id; const current = Array.isArray(values[key]) ? values[key] : []; setValue(key, checked ? [...current, option] : current.filter((item) => item !== option), { shouldValidate: true }); }} />{errors[question.key ?? question.id] && <p role="alert" className="mt-2 text-sm text-red-600">Please complete this field.</p>}</div>)}</div>
         {status === 'error' && <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">Please check the highlighted fields and try again.</p>}
-        <div className="mt-10 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><button type="button" className="button secondary" disabled={step === 0 || status === 'saving'} onClick={() => setStep((current) => current - 1)}>Previous</button><div className="flex flex-col gap-3 sm:flex-row"><button type="button" className="button secondary" disabled={status === 'saving'} onClick={() => save(values, true)}>{status === 'saving' ? 'Saving...' : 'Save draft'}</button>{step < sections.length - 1 ? <button type="button" className="button primary" onClick={async () => { const valid = await validateCurrentSection(); if (valid) setStep((current) => current + 1); }}>Next section</button> : <button type="button" className="button primary" disabled={status === 'saving'} onClick={submitFinal}>Submit requirements</button>}</div></div>
+        <div className="mt-10 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><button type="button" className="button secondary" disabled={step === 0 || status === 'saving'} onClick={() => setStep((current) => current - 1)}>Previous</button><div className="flex flex-col gap-3 sm:flex-row"><button type="button" className="button secondary" disabled={status === 'saving'} onClick={() => { if (hasDraftContent) void save(values, true); }}>{status === 'saving' ? 'Saving...' : 'Save draft'}</button>{step < sections.length - 1 ? <button type="button" className="button primary" onClick={async () => { const valid = await validateCurrentSection(); if (valid) setStep((current) => current + 1); }}>Next section</button> : <button type="button" className="button primary" disabled={status === 'saving'} onClick={submitFinal}>Submit requirements</button>}</div></div>
       </form>
     </div>
   </main>;
