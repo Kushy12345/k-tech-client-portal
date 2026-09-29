@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SubmittedFileManager } from '@/components/dashboard/submitted-file-manager';
+import { EditSubmissionButton } from '@/components/dashboard/edit-submission-button';
 import { createClient } from '@/lib/supabase/server';
 
 const statusLabels: Record<string, string> = { draft: 'Draft', submitted: 'Submitted', under_review: 'Under review', contacted: 'Contacted', converted: 'Converted', archived: 'Archived' };
@@ -44,6 +45,8 @@ export default async function SubmissionPage({ params }: { params: { id: string 
           <Link href={`/intake/${template?.slug ?? 'general-digital-discovery'}?draft=${submission.id}`} className="button primary inline-flex">
             Continue / edit request
           </Link>
+        ) : submission.project_status !== 'Completed' ? (
+          <EditSubmissionButton submissionId={submission.id} slug={template?.slug} />
         ) : null}
       </div>
 
