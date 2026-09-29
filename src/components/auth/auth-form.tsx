@@ -105,15 +105,15 @@ export function AuthForm({ mode, initialError, redirectPath }: AuthFormProps) {
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Technologies</p>
         <h1 className="mt-3 text-3xl font-bold">{mode === 'login' ? 'Welcome back' : 'Create your client account'}</h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-slate-300">
           {mode === 'login' ? 'Continue managing your project discovery and requests.' : 'Save your progress and keep project conversations in one place.'}
         </p>
       </div>
       {mode === 'register' && <label className="block text-sm font-semibold">Full name<input required value={name} onChange={(event) => setName(event.target.value)} className="field mt-2" autoComplete="name" /></label>}
       <label className="block text-sm font-semibold">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="field mt-2" autoComplete="email" /></label>
       <label className="block text-sm font-semibold">Password<input required minLength={8} type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="field mt-2" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} /></label>
-      {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{message}</p>}
+      {error && <p role="alert" className="rounded-lg border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+      {message && <p role="status" className="rounded-lg border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">{message}</p>}
       <button className="button primary w-full" disabled={loading}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}</button>
       <p className="text-center text-sm text-slate-600">
         {mode === 'login' ? 'New to K-Tech? ' : 'Already have an account? '}
