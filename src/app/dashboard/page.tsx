@@ -76,7 +76,7 @@ export default async function DashboardPage() {
               {submissions.map((submission) => {
                 const status = submission.project_status ?? statusLabels[submission.status] ?? submission.status;
                 return (
-                  <Link key={submission.id} href={submission.is_draft ? '/intake/general-digital-discovery' : `/dashboard/submissions/${submission.id}`} className="group card block p-5 transition hover:-translate-y-0.5 hover:border-[#D4AF37] sm:p-6">
+                  <Link key={submission.id} href={submission.is_draft ? `/intake/general-digital-discovery?draft=${submission.id}` : `/dashboard/submissions/${submission.id}`} className="group card block p-5 transition hover:-translate-y-0.5 hover:border-[#D4AF37] sm:p-6">
                     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                       <div>
                         <p className="font-semibold group-hover:text-[#5B21B6]">{projectTitle(submission)}</p>
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-purple-300">{latest.is_draft ? 'Continue your request' : 'Latest request'}</p>
               <p className="mt-2 font-semibold text-white">{projectTitle(latest)}</p>
               <p className="mt-1 text-sm text-slate-400">{latest.is_draft ? 'You have a saved request waiting for you.' : latest.project_status ?? statusLabels[latest.status] ?? latest.status}</p>
-              <Link href={latest.is_draft ? '/intake/general-digital-discovery' : `/dashboard/submissions/${latest.id}`} className="mt-4 inline-flex text-sm font-semibold text-[#D4AF37] hover:underline">
+              <Link href={latest.is_draft ? `/intake/general-digital-discovery?draft=${latest.id}` : `/dashboard/submissions/${latest.id}`} className="mt-4 inline-flex text-sm font-semibold text-[#D4AF37] hover:underline">
                 {latest.is_draft ? 'Continue / edit request →' : 'View request →'}
               </Link>
             </div>
