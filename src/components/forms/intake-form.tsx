@@ -100,7 +100,6 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
       const { error: answerError } = await supabase.from('form_answers').insert(answerRows);
       if (answerError) { setStatus('error'); return false; }
     }
-    if (answerError) { setStatus('error'); return false; }
     for (const [key, file] of Object.entries(files)) {
       const question = questions.find((candidate) => candidate.key === key);
       if (!question) continue;
