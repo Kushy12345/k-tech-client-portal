@@ -110,7 +110,7 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
 
   return <main className="min-h-screen px-4 py-8 sm:px-6 lg:py-14">
     <div className="mx-auto max-w-5xl">
-      <header className="mb-8"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Solutions</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{template.name}</h1><p className="mt-3 max-w-2xl text-slate-600">{template.description}</p></header>
+      <header className="mb-8"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">K-Tech Technologies</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{template.name}</h1><p className="mt-3 max-w-2xl text-slate-600">{template.description}</p></header>
       <div className="mb-8"><div className="mb-3 flex items-center justify-between text-sm font-medium"><span>Step {step + 1} of {sections.length}</span><span>{Math.round(((step + 1) / sections.length) * 100)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-[#D4AF37] transition-all" style={{ width: `${((step + 1) / sections.length) * 100}%` }} /></div></div>
       <form onSubmit={(event) => event.preventDefault()} className="card">
         <div className="mb-8 border-b pb-6"><p className="text-sm font-semibold text-[#D4AF37]">Section {step + 1}</p><h2 className="mt-1 text-2xl font-bold">{currentSection?.title}</h2><p className="mt-2 text-slate-600">{currentSection?.description}</p></div>
