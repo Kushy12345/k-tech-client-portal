@@ -10,6 +10,7 @@ import { SignOutButton } from '@/components/dashboard/sign-out-button';
 type Answers = Record<string, string | string[]>;
 const answerSchema = z.record(z.union([z.string(), z.array(z.string())]));
 const allowedFiles = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+type InitialFile = { questionId: string; filename: string };
 
 function optionsFor(question: FormQuestion): string[] {
   return Array.isArray(question.options) && question.options.every((option): option is string => typeof option === 'string')
@@ -17,10 +18,11 @@ function optionsFor(question: FormQuestion): string[] {
     : [];
 }
 
-function Field({ question, register, value, onMultiChange, onFileChange }: {
+function Field({ question, register, value, existingFileName, onMultiChange, onFileChange }: {
   question: FormQuestion;
   register: UseFormRegister<Answers>;
   value: string | string[] | undefined;
+  existingFileName?: string;
   onMultiChange: (value: string, checked: boolean) => void;
   onFileChange: (file: File | undefined) => void;
 }) {
@@ -33,16 +35,23 @@ function Field({ question, register, value, onMultiChange, onFileChange }: {
     const selected = Array.isArray(value) ? value : [];
     return <div className="grid gap-3 sm:grid-cols-2">{optionsFor(question).map((option) => <label key={option} className="choice"><input type="checkbox" checked={selected.includes(option)} onChange={(event) => onMultiChange(option, event.target.checked)} />{option}</label>)}</div>;
   }
-  if (question.question_type === 'file') return <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" aria-label={question.label} className="field file:mr-4 file:rounded-lg file:border-0 file:bg-[#FBF5D5] file:px-4 file:py-2 file:text-[#B8941F]" onChange={(event) => { const file = event.target.files?.[0]; const valid = !file || (allowedFiles.includes(file.type) && file.size <= 10 * 1024 * 1024); event.target.setCustomValidity(valid ? '' : 'Use a JPG, PNG, WEBP, PDF, DOC, or DOCX file under 10 MB.'); onFileChange(valid ? file : undefined); }} />;
+  if (question.question_type === 'file') return <div className="space-y-2">
+    {existingFileName && <p className="text-sm text-emerald-300">Uploaded: <span className="font-semibold">{existingFileName}</span></p>}
+    <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" aria-label={question.label} className="field file:mr-4 file:rounded-lg file:border-0 file:bg-[#FBF5D5] file:px-4 file:py-2 file:text-[#B8941F]" onChange={(event) => { const file = event.target.files?.[0]; const valid = !file || (allowedFiles.includes(file.type) && file.size <= 10 * 1024 * 1024); event.target.setCustomValidity(valid ? '' : 'Use a JPG, PNG, WEBP, PDF, DOC, or DOCX file under 10 MB.'); onFileChange(valid ? file : undefined); }} />
+    {existingFileName && <p className="text-xs text-slate-500">Choose a new file only if you want to replace this one.</p>}
+  </div>;
   const type = question.question_type === 'url' ? 'url' : question.question_type === 'number' ? 'number' : question.question_type === 'email' ? 'email' : question.question_type === 'date' ? 'date' : 'text';
   return <input {...common} type={type} placeholder={question.placeholder ?? ''} className="field" />;
 }
 
-export function IntakeForm({ template, sections, questions, initialSubmissionId, initialAnswers = {} }: { template: FormTemplate; sections: FormSection[]; questions: FormQuestion[]; initialSubmissionId?: string; initialAnswers?: Answers }) {
-  const [step, setStep] = useState(0);
+export function IntakeForm({ template, sections, questions, initialSubmissionId, initialAnswers = {}, initialStep = 0, initialFiles = [] }: { template: FormTemplate; sections: FormSection[]; questions: FormQuestion[]; initialSubmissionId?: string; initialAnswers?: Answers; initialStep?: number; initialFiles?: InitialFile[] }) {
+  const [step, setStep] = useState(() => Math.min(Math.max(initialStep, 0), Math.max(sections.length - 1, 0)));
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [submissionId, setSubmissionId] = useState<string | undefined>(initialSubmissionId);
   const [files, setFiles] = useState<Record<string, File>>({});
+  const [storedFiles, setStoredFiles] = useState<Record<string, string>>(
+    () => Object.fromEntries(initialFiles.map((file) => [file.questionId, file.filename])),
+  );
   const [hasChanges, setHasChanges] = useState(false);
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm<Answers>({
     mode: 'onBlur',
@@ -63,7 +72,7 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
   const currentQuestions = useMemo(() => questions.filter((question) => question.section_id === currentSection?.id), [currentSection?.id, questions]);
   const values = watch();
   const hasAnswerValues = Object.values(values).some((value) => Array.isArray(value) ? value.length > 0 : typeof value === 'string' ? value.trim().length > 0 : Boolean(value));
-  const hasDraftContent = hasAnswerValues || Object.keys(files).length > 0;
+  const hasDraftContent = hasAnswerValues || Object.keys(files).length > 0 || Object.keys(storedFiles).length > 0;
 
   const save = async (answers: Answers, draft: boolean): Promise<boolean> => {
     setStatus('saving');
@@ -75,7 +84,12 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) { window.location.href = `/login?redirect=/intake/${template.slug}`; return false; }
-    const summary = { business_name: normalizedAnswers.business_name ?? '', contact_name: normalizedAnswers.contact_name ?? '', contact_email: normalizedAnswers.contact_email ?? '' } as unknown as Json;
+    const summary = {
+      business_name: normalizedAnswers.business_name ?? '',
+      contact_name: normalizedAnswers.contact_name ?? '',
+      contact_email: normalizedAnswers.contact_email ?? '',
+      resume_step: step,
+    } as unknown as Json;
     const { data: submission, error } = await supabase.from('form_submissions').upsert({
       id: submissionId,
       template_id: template.id,
@@ -100,15 +114,37 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
       const { error: answerError } = await supabase.from('form_answers').insert(answerRows);
       if (answerError) { setStatus('error'); return false; }
     }
+    const { data: existingFileRows } = await supabase
+      .from('submission_files')
+      .select('id, question_id, storage_path')
+      .eq('submission_id', submission.id);
+
     for (const [key, file] of Object.entries(files)) {
       const question = questions.find((candidate) => candidate.key === key);
       if (!question) continue;
+      const previousFiles = (existingFileRows ?? []).filter((row) => row.question_id === question.id);
       const extension = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
       const path = `${userData.user.id}/${submission.id}/${question.id}-${crypto.randomUUID()}.${extension}`;
       const { error: uploadError } = await supabase.storage.from('submission-assets').upload(path, file, { contentType: file.type, upsert: false });
       if (uploadError) { setStatus('error'); return false; }
-      const { error: fileError } = await supabase.from('submission_files').insert({ submission_id: submission.id, question_id: question.id, storage_path: path, filename: file.name, mime_type: file.type, size_bytes: file.size });
-      if (fileError) { setStatus('error'); return false; }
+      const { error: fileError } = await supabase.from('submission_files').insert({
+        submission_id: submission.id,
+        question_id: question.id,
+        storage_path: path,
+        filename: file.name,
+        mime_type: file.type,
+        size_bytes: file.size,
+      });
+      if (fileError) {
+        await supabase.storage.from('submission-assets').remove([path]);
+        setStatus('error');
+        return false;
+      }
+      if (previousFiles.length) {
+        await supabase.storage.from('submission-assets').remove(previousFiles.map((row) => row.storage_path));
+        await supabase.from('submission_files').delete().in('id', previousFiles.map((row) => row.id));
+      }
+      setStoredFiles((current) => ({ ...current, [key]: file.name }));
     }
 
     if (!draft) {
@@ -160,7 +196,7 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
       <div className="mb-8"><div className="mb-3 flex items-center justify-between text-sm font-medium"><span>Step {step + 1} of {sections.length}</span><span>{Math.round(((step + 1) / sections.length) * 100)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-[#D4AF37] transition-all" style={{ width: `${((step + 1) / sections.length) * 100}%` }} /></div></div>
       <form onChange={() => setHasChanges(true)} onSubmit={(event) => event.preventDefault()} className="card">
         <div className="mb-8 border-b pb-6"><p className="text-sm font-semibold text-[#D4AF37]">Section {step + 1}</p><h2 className="mt-1 text-2xl font-bold">{currentSection?.title}</h2><p className="mt-2 text-slate-300">{currentSection?.description}</p></div>
-        <div className="space-y-7">{currentQuestions.map((question) => <div key={question.id}><label htmlFor={question.key ?? question.id} className="mb-2 block font-semibold">{question.label}{question.required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}</label>{question.help_text && <p className="mb-2 text-sm text-slate-400">{question.help_text}</p>}<Field question={question} register={register} value={values[question.key ?? question.id]} onFileChange={(file) => { const key = question.key ?? question.id; setFiles((current) => { const next = { ...current }; if (file) next[key] = file; else delete next[key]; return next; }); }} onMultiChange={(option, checked) => { const key = question.key ?? question.id; const current = Array.isArray(values[key]) ? values[key] : []; setValue(key, checked ? [...current, option] : current.filter((item) => item !== option), { shouldValidate: true }); }} />{errors[question.key ?? question.id] && <p role="alert" className="mt-2 text-sm text-red-600">Please complete this field.</p>}</div>)}</div>
+        <div className="space-y-7">{currentQuestions.map((question) => <div key={question.id}><label htmlFor={question.key ?? question.id} className="mb-2 block font-semibold">{question.label}{question.required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}</label>{question.help_text && <p className="mb-2 text-sm text-slate-400">{question.help_text}</p>}<Field question={question} register={register} value={values[question.key ?? question.id]} existingFileName={storedFiles[question.key ?? question.id]} onFileChange={(file) => { const key = question.key ?? question.id; setFiles((current) => { const next = { ...current }; if (file) next[key] = file; else delete next[key]; return next; }); }} onMultiChange={(option, checked) => { const key = question.key ?? question.id; const current = Array.isArray(values[key]) ? values[key] : []; setValue(key, checked ? [...current, option] : current.filter((item) => item !== option), { shouldValidate: true }); }} />{errors[question.key ?? question.id] && <p role="alert" className="mt-2 text-sm text-red-600">Please complete this field.</p>}</div>)}</div>
         {status === 'error' && <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">Please check the highlighted fields and try again.</p>}
         <div className="mt-10 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><button type="button" className="button secondary" disabled={step === 0 || status === 'saving'} onClick={() => setStep((current) => current - 1)}>Previous</button><div className="flex flex-col gap-3 sm:flex-row"><button type="button" className="button secondary" disabled={status === 'saving'} onClick={() => { if (hasDraftContent) void save(values, true); }}>{status === 'saving' ? 'Saving...' : 'Save draft'}</button>{step < sections.length - 1 ? <button type="button" className="button primary" onClick={async () => { const valid = await validateCurrentSection(); if (valid) setStep((current) => current + 1); }}>Next section</button> : <button type="button" className="button primary" disabled={status === 'saving'} onClick={submitFinal}>Submit requirements</button>}</div></div>
       </form>
