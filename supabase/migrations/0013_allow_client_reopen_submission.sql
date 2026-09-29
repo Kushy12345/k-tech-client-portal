@@ -101,3 +101,19 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- Also allow clients to remove their own submitted-file metadata when replacing a file.
+DROP POLICY IF EXISTS submission_files_delete_owner ON public.submission_files;
+
+CREATE POLICY submission_files_delete_owner
+ON public.submission_files
+FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.form_submissions fs
+    WHERE fs.id = submission_id
+      AND fs.user_id = (SELECT auth.uid())
+  )
+);
