@@ -50,7 +50,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { q?: 
       <section className="mt-6">
         <div className="mb-4 flex items-center justify-between"><p className="text-sm text-slate-500">{submissions?.length ?? 0} matching requests</p></div>
         {submissions?.length ? (
-          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm"><div className="divide-y">
+          <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/10"><div className="divide-y divide-slate-800">
             {submissions.map((submission) => (
               <Link key={submission.id} href={`/admin/submissions/${submission.id}`} className="block p-5 transition hover:bg-slate-50 sm:p-6">
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
