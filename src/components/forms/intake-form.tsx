@@ -94,8 +94,12 @@ export function IntakeForm({ template, sections, questions, initialSubmissionId,
       const question = questions.find((candidate) => candidate.key === key);
       return { submission_id: submission.id, question_id: question?.id ?? null, answer_text: typeof answer === 'string' ? answer : null, answer_json: Array.isArray(answer) ? answer : null };
     });
-    await supabase.from('form_answers').delete().eq('submission_id', submission.id);
-    const { error: answerError } = await supabase.from('form_answers').insert(answerRows);
+    const { error: answerDeleteError } = await supabase.from('form_answers').delete().eq('submission_id', submission.id);
+    if (answerDeleteError) { setStatus('error'); return false; }
+    if (answerRows.length > 0) {
+      const { error: answerError } = await supabase.from('form_answers').insert(answerRows);
+      if (answerError) { setStatus('error'); return false; }
+    }
     if (answerError) { setStatus('error'); return false; }
     for (const [key, file] of Object.entries(files)) {
       const question = questions.find((candidate) => candidate.key === key);
