@@ -39,6 +39,7 @@ export default async function DashboardPage() {
   const active = submissions?.filter((item) => !['Completed'].includes(item.project_status ?? '')).length ?? 0;
   const completed = submissions?.filter((item) => item.project_status === 'Completed').length ?? 0;
   const latest = submissions?.[0];
+  const projectTitle = (submission: { business_name: string | null; template_id: string | null }) => submission.business_name || 'Website & Digital Solution Discovery';
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
@@ -78,7 +79,7 @@ export default async function DashboardPage() {
                   <Link key={submission.id} href={`/dashboard/submissions/${submission.id}`} className="group card block p-5 transition hover:-translate-y-0.5 hover:border-[#D4AF37] sm:p-6">
                     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                       <div>
-                        <p className="font-semibold group-hover:text-[#5B21B6]">{submission.business_name || 'Untitled project request'}</p>
+                        <p className="font-semibold group-hover:text-[#5B21B6]">{projectTitle(submission)}</p>
                         <p className="mt-1 text-sm text-slate-500">{submission.submitted_at ? 'Submitted' : 'Started'} {new Date(submission.submitted_at ?? submission.created_at).toLocaleDateString()}</p>
                       </div>
                       <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${statusStyles[status] ?? 'bg-slate-100 text-slate-700 border-slate-200'}`}>{status}</span>
@@ -107,7 +108,7 @@ export default async function DashboardPage() {
           {latest ? (
             <div className="rounded-2xl border border-purple-100 bg-purple-50 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-purple-700">Latest request</p>
-              <p className="mt-2 font-semibold text-slate-900">{latest.business_name || 'Untitled project request'}</p>
+              <p className="mt-2 font-semibold text-slate-900">{projectTitle(latest)}</p>
               <p className="mt-1 text-sm text-slate-600">{latest.project_status ?? statusLabels[latest.status] ?? latest.status}</p>
               <Link href={`/dashboard/submissions/${latest.id}`} className="mt-4 inline-block text-sm font-semibold text-purple-700 hover:underline">View request →</Link>
             </div>
